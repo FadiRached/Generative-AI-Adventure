@@ -7,7 +7,7 @@ from requests import post
 API_KEY = ''
 
 def GetApiKey():
-    with open('C:\Keys\deep-ai.txt') as file:
+    with open('deep-ai.txt') as file:
         text = file.read()
         global API_KEY 
         API_KEY = text
