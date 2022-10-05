@@ -42,14 +42,21 @@ def LaunchAIDungeon():
     submit_button = driver.find_element(By.XPATH, '//*[@id="root"]/div/div/div[1]/div[3]/div/div/div[1]/div[1]/div/div/div/div/div/div/div[2]/div[1]/div/div/div[1]/div[2]/div[2]/div[2]')
     text_area = driver.find_element(By.XPATH, '//*[@id="root"]/div/div/div[1]/div[3]/div/div/div[1]/div[1]/div/div/div/div/div/div/div[2]/div[1]/div/div/div[1]/div[2]/div[2]/div[1]/textarea')
     story_text_div = driver.find_element(By.XPATH, '//*[@id="root"]/div/div/div[1]/div[3]/div/div/div[1]/div[1]/div/div/div/div/div/div/div[2]/div[1]/div/div/div[1]/div[1]/div/div')
+    
+    sleep(10)
+    first_time = True
     while(playing):
         story_text = story_text_div.text
+        if(not first_time):
+            story_text = story_text.replace(temp, '')
         GenerateImage(story_text)
         print(story_text)
+        temp = story_text
         input_text = input()
-        text_area.text = input_text
+        text_area.send_keys(input_text)
         submit_button.click()
-        sleep(1)
+        sleep(20)
+        first_time = False
 
 
 GetApiKey()
