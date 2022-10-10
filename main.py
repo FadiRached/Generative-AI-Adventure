@@ -89,7 +89,7 @@ def PlayAIDungeon(driver: webdriver.Chrome):
         input_text = input()
         text_area.send_keys(input_text)
         submit_button.click()
-        sleep(20)
+        sleep(25)
         first_time = False
 
 
