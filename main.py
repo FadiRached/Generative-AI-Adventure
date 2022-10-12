@@ -6,6 +6,7 @@ from selenium.webdriver.common.by import By
 from requests import post
 from replicate import models
 
+
 DEEP_AI_API_KEY = ''
 REPLICATE_API_KEY = ''
 QUICK_START_BUTTON_XPATH = '//*[@id="root"]/div/div/div[1]/div[3]/div/div/div[1]/div[1]/div/div/div/div/div/div/div/div[1]/div/div/div[2]/div/div/div[4]/div[1]'
@@ -82,17 +83,41 @@ def PlayAIDungeon(driver: webdriver.Chrome):
         story_text = story_text_div.text
         if (not first_time):
             story_text = story_text.replace(temp, '')
-        GenerateImageUsingDeepAi(story_text)
-        GenerateImageUsingStableDiffusion(story_text)
+        # GenerateImageUsingDeepAi(story_text)
+        # GenerateImageUsingStableDiffusion(story_text)
         print(story_text)
+        sgText.DisplayText = story_text
         temp += story_text
         input_text = input()
         text_area.send_keys(input_text)
         submit_button.click()
-        sleep(25)
+        sleep(30)
         first_time = False
 
+def Start():
+    GetApiKey()
+    driver = SetupDriver()
+    PlayAIDungeon(driver) 
 
-GetApiKey()
-driver = SetupDriver()
-PlayAIDungeon(driver)
+
+import PySimpleGUI as sg
+
+sg.theme("LightGrey")
+sg.set_options(font = ("Courier New", 8))
+sgText = sg.Text('This is where you will write your story')
+frame_1 = [sgText], [sg.Text('', size = (20,10)), sg.InputText()], [sg.Submit()]
+frame_2 = [[sg.Text('This is where the image will be generated !')], ]
+
+layout = [
+    [sg.Frame('', frame_1, pad = (0,5)),
+     sg.Frame('', frame_2, pad = (0, (12,7)), key = 'Hide')],
+]
+
+window = sg.Window('Image Generator', layout, resizable=True)
+event, values = window.read()
+Start()
+window.maximize()
+window.close()
+
+
+            
