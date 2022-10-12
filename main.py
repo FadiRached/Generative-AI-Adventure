@@ -86,7 +86,7 @@ def PlayAIDungeon(driver: webdriver.Chrome):
         # GenerateImageUsingDeepAi(story_text)
         # GenerateImageUsingStableDiffusion(story_text)
         print(story_text)
-        sgText.DisplayText = story_text
+        sgText.DisplayText = story_text #TODO: Get this working
         temp += story_text
         input_text = input()
         text_area.send_keys(input_text)
