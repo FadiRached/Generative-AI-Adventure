@@ -1,5 +1,6 @@
 import os
 from time import sleep
+import requests
 from selenium.webdriver.chrome.service import Service
 from selenium import webdriver
 from selenium.webdriver.common.by import By
@@ -46,7 +47,9 @@ def GenerateImageUsingDeepAi(text):
     )
 
     json = r.json()
-    print('Deep AI Image URL: ' + json['output_url'])
+    url = json['output_url']
+    print('Deep AI Image URL: ' + url)
+    return url
 
 
 def GenerateImageUsingStableDiffusion(text):
@@ -61,7 +64,7 @@ def GenerateImageUsingStableDiffusion(text):
 
 def LoginToAIDungeon(driver: webdriver.Chrome):
     driver.get(AI_DUNGEON_URL)
-    sleep(10)
+    sleep(15)
     quickstart_button = driver.find_element(By.XPATH, QUICK_START_BUTTON_XPATH)
     quickstart_button.click()
     sleep(20)
@@ -69,13 +72,16 @@ def LoginToAIDungeon(driver: webdriver.Chrome):
         By.XPATH, TURN_OFF_EVENTS_BUTTON_XPATH)
     turn_off_events_button.click()
     sleep(10)
+    global submit_button
+    submit_button = driver.find_element(By.XPATH, SUBMIT_BUTTON_XPATH)
+    global text_area
+    text_area = driver.find_element(By.XPATH, TEXT_AREA_XPATH)
+    global story_text_div
+    story_text_div = driver.find_element(By.XPATH, STORY_TEXT_DIV_XPATH)
 
 
 def PlayAIDungeon(driver: webdriver.Chrome):
     LoginToAIDungeon(driver)
-    submit_button = driver.find_element(By.XPATH, SUBMIT_BUTTON_XPATH)
-    text_area = driver.find_element(By.XPATH, TEXT_AREA_XPATH)
-    story_text_div = driver.find_element(By.XPATH, STORY_TEXT_DIV_XPATH)
 
     first_time = True
     temp = ''
@@ -83,10 +89,18 @@ def PlayAIDungeon(driver: webdriver.Chrome):
         story_text = story_text_div.text
         if (not first_time):
             story_text = story_text.replace(temp, '')
-        # GenerateImageUsingDeepAi(story_text)
-        # GenerateImageUsingStableDiffusion(story_text)
+        
+        #Text
         print(story_text)
-        window['STORY'].update(story_text)
+        window['-STORY-'].update(story_text)
+        
+        #Image
+        url = GenerateImageUsingDeepAi(story_text)
+        response = requests.get(url, stream=True)
+        response.raw.decode_content = True
+        window["-IMAGE-"].update(data=response.raw.read())
+        
+        
         temp += story_text
         input_text = input()
         text_area.send_keys(input_text)
@@ -94,95 +108,82 @@ def PlayAIDungeon(driver: webdriver.Chrome):
         sleep(30)
         first_time = False
 
+
 def Start():
+    SetupGUI()
     GetApiKey()
     driver = SetupDriver()
-    PlayAIDungeon(driver) 
+    PlayAIDungeon(driver)
 
+# # Run the Event Loop
+# while True:
+#     Start()
+#     event, values = window.read()
+#     if event == "Exit" or event == sg.WIN_CLOSED:
+#         break
+#     # Folder name was filled in, make a list of files in the folder
+#     if event == "-FOLDER-":
+#         folder = values["-FOLDER-"]
+#         try:
+#             # Get list of files in folder
+#             file_list = os.listdir(folder)
+#         except:
+#             file_list = []
 
+#         fnames = [
+#             f
+#             for f in file_list
+#             if os.path.isfile(os.path.join(folder, f))
+#             and f.lower().endswith((".png", ".gif"))
+#         ]
+#         window["-FILE LIST-"].update(fnames)
+#     elif event == "-FILE LIST-":  # A file was chosen from the listbox
+#         try:
+#             filename = os.path.join(
+#                 values["-FOLDER-"], values["-FILE LIST-"][0]
+#             )
+#             window["-TOUT-"].update(filename)
+#             window["-IMAGE-"].update(filename=filename)
 
-import PySimpleGUI as sg
+#         except:
+#             pass
 
-sg.theme("LightGrey")
-sg.set_options(font = ("Courier New", 8))
-
-# frame_1 = [sg.Text('This is where you will write your story', key='STORY')], [sg.Text('', size = (20,10)), sg.InputText()], [sg.Submit()]
-# frame_2 = [[sg.Text('This is where the image will be generated !')], ]
-
-# layout = [
-#     [sg.Frame('', frame_1, pad = (0,5)),
-#      sg.Frame('', frame_2, pad = (0, (12,7)), key = 'Hide')],
-# ]
-
-# window = sg.Window('Image Generator', layout, resizable=True)
-# event, values = window.read()
-# Start()
-# window.maximize()
 # window.close()
 
-# First the window layout in 2 columns
 
-file_list_column = [
-    [
-        sg.Text("Story Text", key='STORY')
-    ],
-    [
-        sg.In(size=(25, 1), enable_events=True, key="-FOLDER-")
-    ],
-]
+def SetupGUI():
+    import PySimpleGUI as sg
 
-# For now will only show the name of the file that was chosen
-image_viewer_column = [
-    [sg.Text("Choose an image from list on left:")],
-    [sg.Text(size=(40, 1), key="-TOUT-")],
-    [sg.Image(key="-IMAGE-")],
-]
+    sg.theme("LightGrey")
+    sg.set_options(font=("Courier New", 8))
 
-# ----- Full layout -----
-layout = [
-    [
-        sg.Column(file_list_column),
-        sg.VSeperator(),
-        sg.Column(image_viewer_column),
+    # First the window layout in 2 columns
+    file_list_column = [
+        [
+            sg.Text("Story Text", key='-STORY-')
+        ],
+        [
+            sg.In(size=(25, 1), enable_events=True, key="-FOLDER-")
+        ],
     ]
-]
 
-window = sg.Window("Image Viewer", layout, finalize=True)
+    # For now will only show the name of the file that was chosen
+    image_viewer_column = [
+        [sg.Text("Choose an image from list on left:")],
+        [sg.Text(size=(40, 1), key="-TOUT-")],
+        [sg.Image(key="-IMAGE-")],
+    ]
 
-# Run the Event Loop
-while True:
-    Start()
-    event, values = window.read()
-    if event == "Exit" or event == sg.WIN_CLOSED:
-        break
-    # Folder name was filled in, make a list of files in the folder
-    if event == "-FOLDER-":
-        folder = values["-FOLDER-"]
-        try:
-            # Get list of files in folder
-            file_list = os.listdir(folder)
-        except:
-            file_list = []
-
-        fnames = [
-            f
-            for f in file_list
-            if os.path.isfile(os.path.join(folder, f))
-            and f.lower().endswith((".png", ".gif"))
+    # ----- Full layout -----
+    layout = [
+        [
+            sg.Column(file_list_column),
+            sg.VSeperator(),
+            sg.Column(image_viewer_column),
         ]
-        window["-FILE LIST-"].update(fnames)
-    elif event == "-FILE LIST-":  # A file was chosen from the listbox
-        try:
-            filename = os.path.join(
-                values["-FOLDER-"], values["-FILE LIST-"][0]
-            )
-            window["-TOUT-"].update(filename)
-            window["-IMAGE-"].update(filename=filename)
+    ]
 
-        except:
-            pass
+    global window
+    window = sg.Window("Image Viewer", layout, finalize=True)
 
-window.close()
-
-
-            
+Start()
