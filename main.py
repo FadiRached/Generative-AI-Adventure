@@ -86,7 +86,7 @@ def PlayAIDungeon(driver: webdriver.Chrome):
         # GenerateImageUsingDeepAi(story_text)
         # GenerateImageUsingStableDiffusion(story_text)
         print(story_text)
-        sgText.DisplayText = story_text #TODO: Get this working
+        window['STORY'].update(story_text)
         temp += story_text
         input_text = input()
         text_area.send_keys(input_text)
@@ -100,23 +100,88 @@ def Start():
     PlayAIDungeon(driver) 
 
 
+
 import PySimpleGUI as sg
 
 sg.theme("LightGrey")
 sg.set_options(font = ("Courier New", 8))
-sgText = sg.Text('This is where you will write your story')
-frame_1 = [sgText], [sg.Text('', size = (20,10)), sg.InputText()], [sg.Submit()]
-frame_2 = [[sg.Text('This is where the image will be generated !')], ]
 
-layout = [
-    [sg.Frame('', frame_1, pad = (0,5)),
-     sg.Frame('', frame_2, pad = (0, (12,7)), key = 'Hide')],
+# frame_1 = [sg.Text('This is where you will write your story', key='STORY')], [sg.Text('', size = (20,10)), sg.InputText()], [sg.Submit()]
+# frame_2 = [[sg.Text('This is where the image will be generated !')], ]
+
+# layout = [
+#     [sg.Frame('', frame_1, pad = (0,5)),
+#      sg.Frame('', frame_2, pad = (0, (12,7)), key = 'Hide')],
+# ]
+
+# window = sg.Window('Image Generator', layout, resizable=True)
+# event, values = window.read()
+# Start()
+# window.maximize()
+# window.close()
+
+# First the window layout in 2 columns
+
+file_list_column = [
+    [
+        sg.Text("Story Text", key='STORY')
+    ],
+    [
+        sg.In(size=(25, 1), enable_events=True, key="-FOLDER-")
+    ],
 ]
 
-window = sg.Window('Image Generator', layout, resizable=True)
-event, values = window.read()
-Start()
-window.maximize()
+# For now will only show the name of the file that was chosen
+image_viewer_column = [
+    [sg.Text("Choose an image from list on left:")],
+    [sg.Text(size=(40, 1), key="-TOUT-")],
+    [sg.Image(key="-IMAGE-")],
+]
+
+# ----- Full layout -----
+layout = [
+    [
+        sg.Column(file_list_column),
+        sg.VSeperator(),
+        sg.Column(image_viewer_column),
+    ]
+]
+
+window = sg.Window("Image Viewer", layout, finalize=True)
+
+# Run the Event Loop
+while True:
+    Start()
+    event, values = window.read()
+    if event == "Exit" or event == sg.WIN_CLOSED:
+        break
+    # Folder name was filled in, make a list of files in the folder
+    if event == "-FOLDER-":
+        folder = values["-FOLDER-"]
+        try:
+            # Get list of files in folder
+            file_list = os.listdir(folder)
+        except:
+            file_list = []
+
+        fnames = [
+            f
+            for f in file_list
+            if os.path.isfile(os.path.join(folder, f))
+            and f.lower().endswith((".png", ".gif"))
+        ]
+        window["-FILE LIST-"].update(fnames)
+    elif event == "-FILE LIST-":  # A file was chosen from the listbox
+        try:
+            filename = os.path.join(
+                values["-FOLDER-"], values["-FILE LIST-"][0]
+            )
+            window["-TOUT-"].update(filename)
+            window["-IMAGE-"].update(filename=filename)
+
+        except:
+            pass
+
 window.close()
 
 
