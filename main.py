@@ -19,15 +19,76 @@ AI_DUNGEON_URL = 'https://play.aidungeon.io/main/worldStart?worldPublicId=154290
 DEEP_AI_URL = 'https://api.deepai.org/api/text2img?grid_size=1'
 
 
+def PlayAIDungeon():
+    first_time = True
+    temp = ''
+    while (True):
+        story_text = story_text_div.text
+        if (not first_time):
+            story_text = '\n' + story_text.replace(temp, '') + '\n'
+
+        #Text
+        print(story_text)
+        window['-STORY-'].update(story_text)
+
+        #Image
+        # url = GenerateImageUsingDeepAi(story_text)
+        # response = requests.get(url, stream=True)
+        # response.raw.decode_content = True
+        # window["-IMAGE-"].update(data=response.raw.read())
+
+        temp += story_text
+        input_text = input()
+        text_area.send_keys(input_text)
+        submit_button.click()
+        sleep(30)
+        first_time = False
+
+
+def SetupGUI():
+    import PySimpleGUI as sg
+
+    sg.theme("LightGrey")
+    sg.set_options(font=("Courier New", 16))
+
+    # First the window layout in 2 columns
+    file_list_column = [
+        [
+            sg.Text("Story Text", key='-STORY-')
+        ],
+        [
+            sg.In(size=(25, 1), enable_events=True, key="-FOLDER-")
+        ],
+    ]
+
+    # For now will only show the name of the file that was chosen
+    image_viewer_column = [
+        [sg.Text("Generated Image")],
+        [sg.Text(size=(40, 1), key="-TOUT-")],
+        [sg.Image(key="-IMAGE-")],
+    ]
+
+    # ----- Full layout -----
+    layout = [
+        [
+            sg.Column(file_list_column),
+            sg.VSeperator(),
+            sg.Column(image_viewer_column),
+        ]
+    ]
+
+    global window
+    window = sg.Window("Wade Dungeon", layout, finalize=True)
+
 def SetupDriver():
     service = Service(executable_path="chromedriver.exe")
     options = webdriver.ChromeOptions()
     options.add_argument("--log-level=3")
+    global driver
     driver = webdriver.Chrome(service=service, options=options)
-    return driver
 
 
-def GetApiKey():
+def GetApiKeys():
     with open('deep-ai.txt') as file:
         text = file.read()
         global DEEP_AI_API_KEY
@@ -58,62 +119,40 @@ def GenerateImageUsingStableDiffusion(text):
         model = models.get("stability-ai/stable-diffusion")
         output = model.predict(prompt=text)
         print('Stable Diffusion Image URL: ' + output[0] + '\n')
+        return output[0]
     except Exception as e:
         print(e)
 
 
-def LoginToAIDungeon(driver: webdriver.Chrome):
+def LoginToAIDungeon():
     driver.get(AI_DUNGEON_URL)
     sleep(15)
-    quickstart_button = driver.find_element(By.XPATH, QUICK_START_BUTTON_XPATH)
-    quickstart_button.click()
+    driver.find_element(By.XPATH, QUICK_START_BUTTON_XPATH).click() # Click the 'quick start' button
     sleep(20)
-    turn_off_events_button = driver.find_element(
-        By.XPATH, TURN_OFF_EVENTS_BUTTON_XPATH)
-    turn_off_events_button.click()
+    driver.find_element(By.XPATH, TURN_OFF_EVENTS_BUTTON_XPATH).click() # Click the 'turn off events' button
     sleep(10)
+
+
+def GetAIDungeonElements():
     global submit_button
-    submit_button = driver.find_element(By.XPATH, SUBMIT_BUTTON_XPATH)
     global text_area
-    text_area = driver.find_element(By.XPATH, TEXT_AREA_XPATH)
     global story_text_div
+    
+    submit_button = driver.find_element(By.XPATH, SUBMIT_BUTTON_XPATH)
+    text_area = driver.find_element(By.XPATH, TEXT_AREA_XPATH)
     story_text_div = driver.find_element(By.XPATH, STORY_TEXT_DIV_XPATH)
 
 
-def PlayAIDungeon(driver: webdriver.Chrome):
-    LoginToAIDungeon(driver)
-
-    first_time = True
-    temp = ''
-    while (True):
-        story_text = story_text_div.text
-        if (not first_time):
-            story_text = story_text.replace(temp, '')
-        
-        #Text
-        print(story_text)
-        window['-STORY-'].update(story_text)
-        
-        #Image
-        url = GenerateImageUsingDeepAi(story_text)
-        response = requests.get(url, stream=True)
-        response.raw.decode_content = True
-        window["-IMAGE-"].update(data=response.raw.read())
-        
-        
-        temp += story_text
-        input_text = input()
-        text_area.send_keys(input_text)
-        submit_button.click()
-        sleep(30)
-        first_time = False
-
-
-def Start():
+def main():
     SetupGUI()
-    GetApiKey()
-    driver = SetupDriver()
-    PlayAIDungeon(driver)
+    GetApiKeys()
+    SetupDriver()
+    LoginToAIDungeon()
+    GetAIDungeonElements()
+    PlayAIDungeon()
+
+if __name__ == "__main__":
+    main()
 
 # # Run the Event Loop
 # while True:
@@ -149,41 +188,3 @@ def Start():
 #             pass
 
 # window.close()
-
-
-def SetupGUI():
-    import PySimpleGUI as sg
-
-    sg.theme("LightGrey")
-    sg.set_options(font=("Courier New", 8))
-
-    # First the window layout in 2 columns
-    file_list_column = [
-        [
-            sg.Text("Story Text", key='-STORY-')
-        ],
-        [
-            sg.In(size=(25, 1), enable_events=True, key="-FOLDER-")
-        ],
-    ]
-
-    # For now will only show the name of the file that was chosen
-    image_viewer_column = [
-        [sg.Text("Choose an image from list on left:")],
-        [sg.Text(size=(40, 1), key="-TOUT-")],
-        [sg.Image(key="-IMAGE-")],
-    ]
-
-    # ----- Full layout -----
-    layout = [
-        [
-            sg.Column(file_list_column),
-            sg.VSeperator(),
-            sg.Column(image_viewer_column),
-        ]
-    ]
-
-    global window
-    window = sg.Window("Image Viewer", layout, finalize=True)
-
-Start()
