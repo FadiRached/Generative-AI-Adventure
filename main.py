@@ -147,7 +147,7 @@ def GetAIDungeonElements():
     global submit_button
     global text_area
     global story_text_div
-
+ 
     submit_button = driver.find_element(By.XPATH, SUBMIT_BUTTON_XPATH)
     text_area = driver.find_element(By.XPATH, TEXT_AREA_XPATH)
     story_text_div = driver.find_element(By.XPATH, STORY_TEXT_DIV_XPATH)
