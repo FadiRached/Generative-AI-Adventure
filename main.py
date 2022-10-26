@@ -5,12 +5,12 @@ from selenium.webdriver.chrome.service import Service
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from requests import post
-from replicate import models
+#from replicate import models
 from PIL import Image
 
 
 DEEP_AI_API_KEY = ''
-REPLICATE_API_KEY = ''
+#REPLICATE_API_KEY = ''
 QUICK_START_BUTTON_XPATH = '//*[@id="root"]/div/div/div[1]/div[3]/div/div/div[1]/div[1]/div/div/div/div/div/div/div/div[1]/div/div/div[2]/div/div/div[4]/div[1]'
 TURN_OFF_EVENTS_BUTTON_XPATH = '/html/body/div[3]/div/div[2]/div/div/div/div[1]/div[2]/div/div/div[2]/div/div[2]'
 SUBMIT_BUTTON_XPATH = '//*[@id="root"]/div/div/div[1]/div[3]/div/div/div[1]/div[1]/div/div/div/div/div/div/div[2]/div[1]/div/div/div[1]/div[2]/div[2]/div[2]'
@@ -103,10 +103,10 @@ def GetApiKeys():
         global DEEP_AI_API_KEY
         DEEP_AI_API_KEY = text
 
-    with open('replicate.txt') as file:
-        text = file.read()
-        global REPLICATE_API_KEY
-        REPLICATE_API_KEY = text
+    # with open('replicate.txt') as file:
+    #    text = file.read()
+    #    global REPLICATE_API_KEY
+    #    REPLICATE_API_KEY = text
 
 
 def GenerateImageUsingDeepAi(text):
@@ -121,14 +121,14 @@ def GenerateImageUsingDeepAi(text):
     return url
 
 
-def GenerateImageUsingStableDiffusion(text):
-    try:
-        os.environ['REPLICATE_API_TOKEN'] = REPLICATE_API_KEY
-        model = models.get("stability-ai/stable-diffusion")
-        output = model.predict(prompt=text)
-        return output[0]
-    except Exception as e:
-        print(e)
+#def GenerateImageUsingStableDiffusion(text):
+#    try:
+#        os.environ['REPLICATE_API_TOKEN'] = REPLICATE_API_KEY
+#        model = models.get("stability-ai/stable-diffusion")
+#       output = model.predict(prompt=text)
+#        return output[0]
+#    except Exception as e:
+#        print(e)
 
 
 def LoginToAIDungeon():
