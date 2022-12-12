@@ -7,6 +7,9 @@ from selenium.webdriver.common.by import By
 from requests import post
 #from replicate import models
 from PIL import Image
+import openai
+from apisecrets import API_KEY
+
 
 
 DEEP_AI_API_KEY = ''
@@ -32,7 +35,10 @@ def PlayAIDungeon():
         window['-STORY-'].update(story_text_div.text)
 
         #Image
-        url = GenerateImageUsingDeepAi(story_text)
+        #Send Story_text to GPT-3 with prompt to make picture more accurate
+        prompt= 'Describe what a photo would look like of ' + story_text
+        gpt_image = openai.Completion.create(engine="text-davinci-001", prompt=prompt, max_tokens=1000)
+        url = GenerateImageUsingDeepAi(gpt_image)
         img = DownloadImage(url)
         window["-IMAGE-"].update(img)
 
